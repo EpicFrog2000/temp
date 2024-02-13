@@ -2,7 +2,6 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from PIL import Image, ImageDraw, ExifTags
 import time
-import inspect
 
 # Define the measure_runtime decorator
 def measure_runtime(func):
@@ -16,7 +15,7 @@ def measure_runtime(func):
     return wrapper
 
 # Apply the measure_runtime decorator to all functions in the module
-def apply_decorator_to_all_functions():
+def enable_measure_runtime():
     for name, obj in globals().items():
         if callable(obj) and obj.__module__ == __name__:
             globals()[name] = measure_runtime(obj)
@@ -89,7 +88,7 @@ def compute_embeddings(stored_img_paths):
     return embeddings
 
 # Takes photo of face and array with images, checks and returns if found matching face among stored_img_paths
-def compare_faces(img_path, stored_img_embeddings, threshold=0.9):
+def compare_faces(img_path, stored_img_embeddings, SHOW_RESULT, threshold=0.9, ):
     img = Image.open(img_path)
     img = rotate_image(img)
     face, prob = mtcnn(img, return_prob=True)
@@ -107,21 +106,19 @@ def compare_faces(img_path, stored_img_embeddings, threshold=0.9):
                 best_match_path = stored_img_path
 
         if best_match_path:
-            #draw_and_show_faces(best_match_path, img)
+            if SHOW_RESULT:
+                draw_and_show_faces(best_match_path, img)
             return "Match found: {}".format(best_match_path)
         else:
             return "No match found"
     else:
         return "No face detected or face probability less than 90%"
 
-
-
-
 if __name__ == "__main__":
     
     # Apply the measure_runtime decorator to all functions in this module
-    apply_decorator_to_all_functions()
-    
+    enable_measure_runtime()
+   
     # Try to use gpu
     device = check_gpu()
     print(device)
@@ -130,13 +127,18 @@ if __name__ == "__main__":
     mtcnn = MTCNN(image_size=160, margin=0, min_face_size=20, device=device)
     resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
     
-    # Compute embeddings for stored images
+    # If True when program matches face, displays images of document and user face
+    SHOW_RESULT = False
+    
+    # Paths to documents
     stored_img_paths = ['images/img3.jpg', 'images/img4.jpg', 'images/img5.jpg', 'images/img2.jpg', 'images/img1.jpg']
+    
+    # Compute embeddings for stored images
     stored_img_embeddings = compute_embeddings(stored_img_paths)
     
     # Path to user photo
     user_photo = 'images/Danciu.jpg'
     
     # Checks if face from user_photo matches with any faces found in photos in stored_img_paths
-    result = compare_faces(user_photo, stored_img_embeddings)
+    result = compare_faces(user_photo, stored_img_embeddings, SHOW_RESULT)
     print(result)
