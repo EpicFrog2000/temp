@@ -2,8 +2,9 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 from PIL import Image, ImageDraw, ExifTags
 import time
+import inspect
 
-# Used for mesuring performance
+# Define the measure_runtime decorator
 def measure_runtime(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -14,12 +15,12 @@ def measure_runtime(func):
         return result
     return wrapper
 
-# Apply the measure_runtime decorator to all functions in this module
-def apply_decorator_to_all_functions(module):
-    for attr_name in dir(module):
-        attr = getattr(module, attr_name)
-        if callable(attr):
-            setattr(module, attr_name, measure_runtime(attr))
+# Apply the measure_runtime decorator to all functions in the module
+def apply_decorator_to_all_functions():
+    for name, obj in globals().items():
+        if callable(obj) and obj.__module__ == __name__:
+            globals()[name] = measure_runtime(obj)
+
 
 # Make pytorch use GPU is possible
 def check_gpu():
@@ -106,7 +107,7 @@ def compare_faces(img_path, stored_img_embeddings, threshold=0.9):
                 best_match_path = stored_img_path
 
         if best_match_path:
-            draw_and_show_faces(best_match_path, img)
+            #draw_and_show_faces(best_match_path, img)
             return "Match found: {}".format(best_match_path)
         else:
             return "No match found"
@@ -114,10 +115,12 @@ def compare_faces(img_path, stored_img_embeddings, threshold=0.9):
         return "No face detected or face probability less than 90%"
 
 
+
+
 if __name__ == "__main__":
     
-    # Turn on mesuring function runtime, comment to turn off
-    apply_decorator_to_all_functions(globals())
+    # Apply the measure_runtime decorator to all functions in this module
+    apply_decorator_to_all_functions()
     
     # Try to use gpu
     device = check_gpu()
