@@ -63,3 +63,5 @@ if frame_contours.size != 0:
     cv2.imshow('Warped Image', img_warped)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+# testowałem kod Alexeya
